@@ -1,0 +1,20 @@
+version: 0.2
+dev:
+  global:
+    parameters:
+      region: ap-south-1
+  deploy:
+    parameters:
+      template_file: template.[yaml|yml|json]
+      fail_on_empty_changeset: true
+      on_failure: ROLLBACK
+      max_wait_duration: 60
+      stack_name: url-shortener-dev
+      s3_prefix: url-shortener-skr/dev
+      resolve_s3: true
+      capabilities:
+        - CAPABILITY_IAM  
+        - CAPABILITY_NAMED_IAM
+      parameter_overrides: UrlShortenerTableName=url-shortener-dev-skr
+  
+  

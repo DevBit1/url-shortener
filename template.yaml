@@ -1,0 +1,92 @@
+# Make a dynamodb table with custom name
+#
+
+Transform: AWS::Serverless-2016-10-31
+Description: URL Shortener Application
+Globals:
+  Function:
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref UrlShortenerTableName
+Parameters:
+  UrlShortenerTableName:
+    Type: String
+    Description: Name of the DynamoDB table for URL Shortener
+    Default: UrlShortenerTable
+Resources:
+  UrlShortenerTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName: !Ref UrlShortenerTableName
+      PrimaryKey:
+        Name: shortId
+        Type: String
+  CreateShortUrlFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: createShortUrl.mainFunction
+      CodeUri: .
+      Runtime: nodejs24.x
+      # What happens when the user creating this application does not have permissions to create a DynamoDB table? It fails
+      Policies:
+        - CloudWatchPutMetricPolicy: {}
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UrlShortenerTableName
+      Events:
+        CreateShortUrlApi:
+          Type: Api
+          Properties:
+            Path: /urlApi/get-url-shortener
+            Method: post
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Format: cjs
+        Minify: false
+        Target: node18
+        EntryPoints:
+          - src/createShortUrl.ts
+        External:
+          - "@aws-sdk/client-dynamodb"
+  GetOgUrlFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: getOgUrl.mainFunction
+      CodeUri: .
+      Runtime: nodejs24.x
+      Policies:
+        - CloudWatchPutMetricPolicy: {}
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UrlShortenerTableName
+      Events:
+        GetOgUrlApi:
+          Type: Api
+          Properties:
+            Path: /urlApi/short/{shortId}
+            Method: get
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Format: cjs
+        Minify: false
+        Target: node18
+        EntryPoints:
+          - src/getOgUrl.ts
+        External:
+          - "@aws-sdk/client-dynamodb"
+Outputs:
+  UrlShortenerTableName:
+    Description: DynamoDB Table Name
+    Value: !Ref UrlShortenerTable
+  UrlShortenerTableArn:
+    Description: DynamoDB Table ARN
+    Value: !GetAtt UrlShortenerTable.Arn
+  CreateShortUrlFunctionArn:
+    Description: Create Short URL Lambda Function ARN
+    Value: !GetAtt CreateShortUrlFunction.Arn
+  GetOgUrlFunctionArn:
+    Description: Get Original URL Lambda Function ARN
+    Value: !GetAtt GetOgUrlFunction.Arn
+  ApiEndpoint:
+    Description: API Gateway Endpoint URL
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod"
