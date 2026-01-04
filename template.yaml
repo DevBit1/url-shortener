@@ -38,6 +38,7 @@ Resources:
         - LoggingLevel: INFO
           DataTraceEnabled: true
           HttpMethod: "*"
+          ResourcePath: "/*"
       Name: !Ref UrlApiGatewayName
 
   UrlShortenerTable:
