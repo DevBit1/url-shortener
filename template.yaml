@@ -70,7 +70,7 @@ Resources:
         GetUrlApi:
           Type: Api
           Properties:
-            Path: /urlApi/{shortId}
+            Path: /urlApi/short/{shortId}
             Method: get
             RestApiId: !Ref UrlApiGateway
     Metadata:
