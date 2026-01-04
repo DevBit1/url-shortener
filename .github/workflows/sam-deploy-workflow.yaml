@@ -1,0 +1,55 @@
+name: App Deployment workflow
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - src/**
+      - template.yaml
+      - samconfig.*
+      - .github/workflows/sam-deploy-workflow.yaml
+      - package.json
+      - package-lock.json
+  pull_request:
+    branches:
+      - "*"
+
+jobs:
+  test-app:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Tests
+        run: npm run test
+  build-url-app:
+    if: github.event_name == 'push' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Configure AWS credentials
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set default.region ap-south-1
+
+      - name: Build SAM Application
+        run: |
+          sam build
+
+      - name: Deploy sam Application
+        run: |
+          sam deploy --config-env dev --config-file samconfig.yaml

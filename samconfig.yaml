@@ -9,12 +9,11 @@ dev:
       fail_on_empty_changeset: true
       on_failure: ROLLBACK
       max_wait_duration: 60
-      stack_name: url-shortener-dev
+      stack_name: url-shortener-stack-skr
       s3_prefix: url-shortener-skr/dev
       resolve_s3: true
       capabilities:
         - CAPABILITY_IAM  
         - CAPABILITY_NAMED_IAM
-      parameter_overrides: UrlShortenerTableName=url-shortener-dev-skr
   
   
