@@ -28,6 +28,9 @@ Parameters:
       - dev
       - test
       - prod
+  JwtSecret:
+    Type: String
+    Description: Secret key for JWT token verification
 
 Resources:
   UrlApiGateway:
@@ -40,6 +43,16 @@ Resources:
           HttpMethod: "*"
           ResourcePath: "/*"
       Name: !Ref UrlApiGatewayName
+      Auth:
+        Authorizers:
+          LambdaRequestAuthorizerFn:
+            FunctionArn: !GetAtt UrlShortenerAuthorizerFunction.Arn
+            FunctionPayloadType: REQUEST
+            Identity:
+              Headers:
+                - Authorization
+        DefaultAuthorizer: LambdaRequestAuthorizerFn
+    DependsOn: UrlShortenerAuthorizerFunction
 
   UrlShortenerTable:
     Type: AWS::Serverless::SimpleTable
@@ -84,7 +97,29 @@ Resources:
         External:
           - "@aws-sdk/client-dynamodb"
           - "aws-lambda"
+    DependsOn: 
+      - UrlShortenerTable
 
+  UrlShortenerAuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: authorizer.handler
+      CodeUri: .
+      Runtime: nodejs24.x
+      FunctionName: UrlShortenerAuthorizerFunction-SKR
+      Environment:
+        Variables:
+          JWT_SECRET: !Ref JwtSecret
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Format: cjs
+        Minify: false
+        Target: node18
+        EntryPoints:
+          - src/authorizer.ts
+        External:
+          - "aws-lambda"
 
 Outputs:
   UrlShortenerTableName:
@@ -96,6 +131,9 @@ Outputs:
   UrlShortenerFunctionArn:
     Description: Create Short URL Lambda Function ARN
     Value: !GetAtt UrlShortenerFunction.Arn
+  UrlShortenerAuthorizerFunctionArn:
+    Description: Authorizer Lambda Function ARN
+    Value: !GetAtt UrlShortenerAuthorizerFunction.Arn
   ApiEndpoint:
     Description: API Gateway Endpoint URL
     Value: !Sub "https://${UrlApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod"

@@ -19,7 +19,6 @@ jobs:
   test-app:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -29,10 +28,10 @@ jobs:
 
       - name: Run Tests
         run: npm run test
+
   build-url-app:
     if: github.event_name == 'push' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -52,4 +51,4 @@ jobs:
 
       - name: Deploy sam Application
         run: |
-          sam deploy --config-env dev --config-file samconfig.yaml
+          sam deploy --config-env dev --config-file samconfig.yaml --parameter-overrides "JwtSecret=${{ secrets.JWT_SECRET }}"
