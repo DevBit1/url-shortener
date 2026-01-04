@@ -2,4 +2,5 @@
 *.aws-sam
 /node_modules
 /dist
+/coverage
 

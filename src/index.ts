@@ -59,6 +59,7 @@ export const handler = async (
       };
     }
   } catch (error) {
+    console.error("Error in handler level : ", error)
     return {
       statusCode: 500,
       body: JSON.stringify({ message: "Internal server error" }),

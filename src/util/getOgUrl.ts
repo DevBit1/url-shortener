@@ -21,8 +21,6 @@ export async function getUrl(shortId: string): Promise<Response> {
 
     const response = await client.send(command);
 
-    console.log("DynamoDB GetItem response: ", JSON.stringify(response, null, 2));
-
     if (response.Item && response.Item.parentUrl && response.Item.parentUrl.S) {
       return {
         statusCode: 301,
@@ -39,7 +37,6 @@ export async function getUrl(shortId: string): Promise<Response> {
     }
   } catch (error) {
     console.error("Error for get command: ", error)
-    console.log("Error retrieving parent URL: ", JSON.stringify(error));
     const statusCode = (error as any)?.$metadata?.httpStatusCode || 500;
     const message =
       error instanceof Error ? error.message : "Failed to retrieve parent URL";

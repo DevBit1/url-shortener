@@ -52,11 +52,6 @@ describe("URL Shortener creation Tests", () => {
         throw new Error("Invalid command type");
       }
 
-      console.log(
-        "Mock send called with command: ",
-        JSON.stringify(command, null, 2)
-      );
-
       const input = command.input;
 
       if (!input.TableName) {
@@ -83,7 +78,6 @@ describe("URL Shortener creation Tests", () => {
     });
   });
 
-  // What does this do ?
   beforeEach(() => {
     sendSpy.mockClear();
   });
@@ -176,7 +170,6 @@ describe("URL fetch Tests", () => {
     expect(response.statusCode).toBe(400);
     const responseBody = JSON.parse(response.body);
 
-    console.log("Response body: ", responseBody);
     expect(responseBody).toHaveProperty("message", "Short ID is required");
 
     expect(sendSpy).not.toHaveBeenCalled();
