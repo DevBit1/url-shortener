@@ -1,8 +1,9 @@
 import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
+import { Response } from "../index.js";
 
 const client = new DynamoDBClient({ region: "ap-south-1" });
 
-export default function generateShortCode(length = 7) {
+export function generateShortCode(length = 7) {
   const chars =
     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let result = "";
@@ -14,53 +15,11 @@ export default function generateShortCode(length = 7) {
   return result;
 }
 
-interface EventObject {
-  methodType: "CREATE" | "GET";
-  url?: string;
-  shortId?: string;
-}
-
-interface HttpEventObject {
-  path: string;
-  headers: Record<string, string>;
-  body?: string;
-  queryStringParameters?: Record<string, string>;
-  pathParameters?: Record<string, string>;
-  requestContext: Record<string, any>;
-  httpMethod: string;
-}
-
-const isHttpRequest = (
-  event: EventObject | HttpEventObject
-): event is HttpEventObject => {
-  return "requestContext" in event;
-};
-
-export interface Response {
-  statusCode: number;
-  body: string;
-  headers?: { [key: string]: string };
-}
-
-export const mainFunction = async (
-  event: EventObject | HttpEventObject
-): Promise<Response> => {
-  let url: string = "";
-  let baseUrl: string = "";
-  console.log(
-    "Event received in createShortUrl: ",
-    JSON.stringify(event, null, 2)
-  );
-  console.log("\n\n------------------------------------\n")
+export default async function createShortUrl(
+  url: string,
+  baseUrl: string
+): Promise<Response> {
   try {
-    if (isHttpRequest(event)) {
-      baseUrl = `${event.headers["X-Forwarded-Proto"]}://${event.headers["Host"]}/${event.requestContext.stage}/urlApi/short/`;
-      url = JSON.parse(event?.body || "")?.url || "";
-    } else {
-      baseUrl = "https://skrt.in/";
-      url = event.url || "";
-    }
-
     if (!url || typeof url !== "string") {
       return {
         statusCode: 400,
@@ -95,9 +54,12 @@ export const mainFunction = async (
       ConditionExpression: "attribute_not_exists(shortId)",
     });
 
-    console.log("Putting item with command: ", JSON.stringify(command, null, 2));
+    // console.log(
+    //   "Putting item with command: ",
+    //   JSON.stringify(command, null, 2)
+    // );
 
-    await client.send(command);
+    console.log("Sending PutItemCommand to DynamoDB", await client.send(command));
 
     return {
       statusCode: 201,
@@ -111,8 +73,9 @@ export const mainFunction = async (
       error instanceof Error &&
       error.name === "ConditionalCheckFailedException"
     ) {
-      return mainFunction(event);
+      return createShortUrl(url, baseUrl);
     }
+    console.error("Error: ", error)
     console.log("Error creating short URL: ", JSON.stringify(error, null, 2));
     const statusCode = (error as any)?.$metadata?.httpStatusCode || 500;
     const message =
@@ -124,4 +87,4 @@ export const mainFunction = async (
       }),
     };
   }
-};
+}

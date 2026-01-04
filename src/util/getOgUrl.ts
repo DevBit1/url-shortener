@@ -1,46 +1,10 @@
 import { GetItemCommand, DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { Response } from "../index.js";
 
 const client = new DynamoDBClient({ region: "ap-south-1" });
 
-interface EventObject {
-  methodType: "CREATE" | "GET";
-  url?: string;
-  shortId?: string;
-}
-
-interface HttpEventObject {
-  path: string;
-  headers: Record<string, string>;
-  body?: string;
-  queryStringParameters?: Record<string, string>;
-  pathParameters?: Record<string, string>;
-  requestContext: Record<string, any>;
-  httpMethod: string;
-}
-
-export interface Response {
-  statusCode: number;
-  body: string;
-  headers?: { [key: string]: string };
-}
-
-const isHttpRequest = (
-  event: EventObject | HttpEventObject
-): event is HttpEventObject => {
-  return "requestContext" in event;
-};
-
-export const mainFunction = async (
-  event: EventObject | HttpEventObject
-): Promise<Response> => {
+export async function getUrl(shortId: string): Promise<Response> {
   try {
-    let shortId: string = "";
-    if (isHttpRequest(event)) {
-      shortId = event.pathParameters?.shortId || "";
-    } else {
-      shortId = event.shortId || "";
-    }
-
     if (!shortId) {
       return {
         statusCode: 400,
@@ -57,6 +21,8 @@ export const mainFunction = async (
 
     const response = await client.send(command);
 
+    console.log("DynamoDB GetItem response: ", JSON.stringify(response, null, 2));
+
     if (response.Item && response.Item.parentUrl && response.Item.parentUrl.S) {
       return {
         statusCode: 301,
@@ -72,6 +38,7 @@ export const mainFunction = async (
       };
     }
   } catch (error) {
+    console.error("Error for get command: ", error)
     console.log("Error retrieving parent URL: ", JSON.stringify(error));
     const statusCode = (error as any)?.$metadata?.httpStatusCode || 500;
     const message =
@@ -83,4 +50,4 @@ export const mainFunction = async (
       }),
     };
   }
-};
+}
