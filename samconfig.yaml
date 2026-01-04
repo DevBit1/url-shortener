@@ -9,7 +9,7 @@ dev:
       fail_on_empty_changeset: true
       on_failure: ROLLBACK
       max_wait_duration: 60
-      stack_name: url-shortener
+      stack_name: url-shortener-stack-skr
       s3_prefix: url-shortener-skr
       resolve_s3: true
       capabilities:
@@ -26,7 +26,7 @@ test:
       fail_on_empty_changeset: true
       on_failure: ROLLBACK
       max_wait_duration: 60
-      stack_name: url-shortener
+      stack_name: url-shortener-stack-skr
       s3_prefix: url-shortener-skr
       resolve_s3: true
       capabilities:
@@ -43,7 +43,7 @@ prod:
       fail_on_empty_changeset: true
       on_failure: ROLLBACK
       max_wait_duration: 60
-      stack_name: url-shortener
+      stack_name: url-shortener-stack-skr
       s3_prefix: url-shortener-skr
       resolve_s3: true
       capabilities:
