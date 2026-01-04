@@ -41,9 +41,6 @@ export default async function createShortUrl(
     const shortId = generateShortCode();
     const shortUrl = baseUrl + shortId;
 
-    console.log("Generated short ID: ", shortId);
-    console.log("Full short URL: ", shortUrl);
-
     const command = new PutItemCommand({
       TableName: process.env.TABLE_NAME || "url-shortener-skr",
       Item: {
@@ -54,12 +51,7 @@ export default async function createShortUrl(
       ConditionExpression: "attribute_not_exists(shortId)",
     });
 
-    // console.log(
-    //   "Putting item with command: ",
-    //   JSON.stringify(command, null, 2)
-    // );
-
-    console.log("Sending PutItemCommand to DynamoDB", await client.send(command));
+    await client.send(command);
 
     return {
       statusCode: 201,
@@ -76,7 +68,6 @@ export default async function createShortUrl(
       return createShortUrl(url, baseUrl);
     }
     console.error("Error: ", error)
-    console.log("Error creating short URL: ", JSON.stringify(error, null, 2));
     const statusCode = (error as any)?.$metadata?.httpStatusCode || 500;
     const message =
       error instanceof Error ? error.message : "Failed to create short URL";
