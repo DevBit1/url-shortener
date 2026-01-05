@@ -8,13 +8,13 @@ import {
 } from "@jest/globals";
 import { APIGatewayEvent } from "aws-lambda";
 import {
-  DynamoDBClient,
-  GetItemCommand,
-  PutItemCommand,
-} from "@aws-sdk/client-dynamodb";
+  DynamoDBDocumentClient,
+  PutCommand,
+  GetCommand,
+} from "@aws-sdk/lib-dynamodb";
 
 const sendSpy = jest
-  .spyOn(DynamoDBClient.prototype, "send")
+  .spyOn(DynamoDBDocumentClient.prototype, "send")
   .mockImplementation(async () => Promise.resolve({}));
 
 import { handler } from "../src/index.js";
@@ -48,7 +48,7 @@ const getApiProxyEvent = (
 describe("URL Shortener creation Tests", () => {
   beforeAll(() => {
     sendSpy.mockImplementation(async (command) => {
-      if (!(command instanceof PutItemCommand)) {
+      if (!(command instanceof PutCommand)) {
         throw new Error("Invalid command type");
       }
 
@@ -62,15 +62,15 @@ describe("URL Shortener creation Tests", () => {
         throw new Error("Missing Item");
       }
 
-      if (!input.Item.shortId || !input.Item.shortId.S) {
+      if (!input.Item.shortId) {
         throw new Error("Missing required attribute: shortId (primary key)");
       }
 
-      if (!input.Item.parentUrl || !input.Item.parentUrl.S) {
+      if (!input.Item.parentUrl) {
         throw new Error("Missing required attribute: parentUrl");
       }
 
-      if (!input.Item.createdAt || !input.Item.createdAt.S) {
+      if (!input.Item.createdAt) {
         throw new Error("Missing required attribute: createdAt");
       }
 
@@ -134,7 +134,7 @@ describe("URL Shortener creation Tests", () => {
 describe("URL fetch Tests", () => {
   beforeAll(() => {
     sendSpy.mockImplementation(async (command) => {
-      if (!(command instanceof GetItemCommand)) {
+      if (!(command instanceof GetCommand)) {
         throw new Error("Invalid command type");
       }
 
@@ -146,7 +146,7 @@ describe("URL fetch Tests", () => {
         throw new Error("Missing TableName");
       }
 
-      if (!input.Key || !input.Key.shortId || !input.Key.shortId.S) {
+      if (!input.Key || !input.Key.shortId) {
         throw new Error("Missing required Key attribute: shortId");
       }
 
@@ -198,8 +198,8 @@ describe("URL fetch Tests", () => {
     sendSpy.mockImplementationOnce(async (command) => {
       return {
         Item: {
-          shortId: { S: "abcdefg" },
-          parentUrl: { S: testUrl },
+          shortId: "abcdefg",
+          parentUrl: testUrl,
         },
       };
     });
