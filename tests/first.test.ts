@@ -435,19 +435,4 @@ describe("Verify Authorizer", () => {
     expect(result.policyDocument).toHaveProperty("Statement");
     expect(Array.isArray(result.policyDocument.Statement)).toBe(true);
   });
-
-  test("THIS TEST SHOULD FAIL - intentional failure for testing", async () => {
-    jwtMock.mockImplementationOnce(() => {
-      return { role: "admin" } as any;
-    });
-
-    const event = getAuthorizerEvent(
-      "valid-token"
-    ) as APIGatewayRequestAuthorizerEvent;
-
-    const result = await authorizerHandler(event);
-
-    // This assertion will fail because admin should Allow, not Deny
-    expect(result.policyDocument.Statement[0].Effect).toBe("Deny");
-  });
 });
