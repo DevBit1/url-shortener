@@ -1,18 +1,39 @@
-import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
 import { Response } from "../index.js";
 
 const client = new DynamoDBClient({ region: "ap-south-1" });
+const docClient = DynamoDBDocumentClient.from(client);
 
-export function generateShortCode(length = 7) {
-  const chars =
-    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let result = "";
+abstract class ShortUrl {
+  abstract shortId: string;
+  abstract parentUrl: string;
+  protected abstract generateCode(length: number): string;
+}
 
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+class ShortUrlImpl extends ShortUrl {
+  shortId: string;
+  parentUrl: string;
+  createdAt: string;
+
+  protected generateCode = (length: number): string => {
+    const chars =
+      "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let result = "";
+
+    for (let i = 0; i < length; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    return result;
+  };
+
+  constructor(parentUrl: string) {
+    super();
+    this.shortId = this.generateCode(7);
+    this.parentUrl = parentUrl;
+    this.createdAt = new Date().toISOString();
   }
-
-  return result;
 }
 
 export default async function createShortUrl(
@@ -38,20 +59,16 @@ export default async function createShortUrl(
       };
     }
 
-    const shortId = generateShortCode();
-    const shortUrl = baseUrl + shortId;
+    const shortUrlObj = new ShortUrlImpl(url);
+    const shortUrl = baseUrl + shortUrlObj.shortId;
 
-    const command = new PutItemCommand({
+    const command = new PutCommand({
       TableName: process.env.TABLE_NAME || "url-shortener-skr",
-      Item: {
-        shortId: { S: shortId },
-        parentUrl: { S: url },
-        createdAt: { S: new Date().toISOString() },
-      },
+      Item: shortUrlObj,
       ConditionExpression: "attribute_not_exists(shortId)",
     });
 
-    await client.send(command);
+    await docClient.send(command);
 
     return {
       statusCode: 201,
@@ -67,7 +84,7 @@ export default async function createShortUrl(
     ) {
       return createShortUrl(url, baseUrl);
     }
-    console.error("Error: ", error)
+    console.error("Error: ", error);
     const statusCode = (error as any)?.$metadata?.httpStatusCode || 500;
     const message =
       error instanceof Error ? error.message : "Failed to create short URL";

@@ -1,7 +1,9 @@
 import { GetItemCommand, DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { Response } from "../index.js";
 
 const client = new DynamoDBClient({ region: "ap-south-1" });
+const docClient = DynamoDBDocumentClient.from(client);
 
 export async function getUrl(shortId: string): Promise<Response> {
   try {
@@ -12,21 +14,22 @@ export async function getUrl(shortId: string): Promise<Response> {
       };
     }
 
-    const command = new GetItemCommand({
+    const command = new GetCommand({
       TableName: process.env.TABLE_NAME || "url-shortener-skr",
       Key: {
-        shortId: { S: shortId },
+        shortId,
       },
     });
 
-    const response = await client.send(command);
+    const response = await docClient.send(command);
 
-    if (response.Item && response.Item.parentUrl && response.Item.parentUrl.S) {
+
+    if (response.Item && response.Item.parentUrl) {
       return {
         statusCode: 301,
-        body: JSON.stringify({ parentUrl: response.Item.parentUrl.S }),
+        body: JSON.stringify({ parentUrl: response.Item.parentUrl }),
         headers: {
-          Location: response.Item.parentUrl.S,
+          Location: response.Item.parentUrl,
         },
       };
     } else {
@@ -36,7 +39,7 @@ export async function getUrl(shortId: string): Promise<Response> {
       };
     }
   } catch (error) {
-    console.error("Error for get command: ", error)
+    console.error("Error for get command: ", error);
     const statusCode = (error as any)?.$metadata?.httpStatusCode || 500;
     const message =
       error instanceof Error ? error.message : "Failed to retrieve parent URL";
