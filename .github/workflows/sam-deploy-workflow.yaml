@@ -45,10 +45,11 @@ jobs:
           aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws configure set default.region ap-south-1
 
-      - name: Build SAM Application
+      - name: Build SAM Application and package it
         run: |
           sam build
+          sam package --config-env dev --config-file samconfig.yaml
 
-      - name: Deploy sam Application
-        run: |
-          sam deploy --config-env dev --config-file samconfig.yaml --parameter-overrides "JwtSecret=${{ secrets.JWT_SECRET }}"
+      # - name: Deploy sam Application
+      #   run: |
+      #     sam deploy --config-env dev --config-file samconfig.yaml --parameter-overrides "JwtSecret=${{ secrets.JWT_SECRET }}"
