@@ -1,0 +1,162 @@
+Transform: AWS::Serverless-2016-10-31
+Description: URL Shortener Application
+Globals:
+  Function:
+    Environment:
+      Variables:
+        TABLE_NAME:
+          Ref: UrlShortenerTableName
+Parameters:
+  UrlShortenerTableName:
+    Type: String
+    Description: Name of the DynamoDB table for URL Shortener
+    Default: UrlShortenerTable-SKR
+  UrlApiGatewayName:
+    Type: String
+    Description: API Gateway Name
+    Default: UrlShortenerApi-SKR
+  UrlShortenerFunctionName:
+    Type: String
+    Description: Lambda Function Name for URL Shortener
+    Default: UrlShortenerFunction-SKR
+  ApiStageName:
+    Type: String
+    Description: API Gateway Stage Name
+    Default: test
+    AllowedValues:
+    - dev
+    - test
+    - prod
+  JwtSecret:
+    Type: String
+    Description: Secret key for JWT token verification
+Resources:
+  UrlApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName:
+        Ref: ApiStageName
+      MethodSettings:
+      - LoggingLevel: INFO
+        DataTraceEnabled: true
+        HttpMethod: '*'
+        ResourcePath: /*
+      Name:
+        Ref: UrlApiGatewayName
+      Auth:
+        Authorizers:
+          LambdaRequestAuthorizerFn:
+            FunctionArn:
+              Fn::GetAtt:
+              - UrlShortenerAuthorizerFunction
+              - Arn
+            FunctionPayloadType: REQUEST
+            Identity:
+              Headers:
+              - Authorization
+              ReauthorizeEvery: 100
+        DefaultAuthorizer: LambdaRequestAuthorizerFn
+    DependsOn: UrlShortenerAuthorizerFunction
+    Metadata:
+      SamResourceId: UrlApiGateway
+  UrlShortenerTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      TableName:
+        Ref: UrlShortenerTableName
+      PrimaryKey:
+        Name: shortId
+        Type: String
+    Metadata:
+      SamResourceId: UrlShortenerTable
+  UrlShortenerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: index.handler
+      CodeUri: s3://skr-sam-bucket/url-shortener-skr/48c5315ab5fd4caf1cb1a7c4319482d7
+      Runtime: nodejs24.x
+      FunctionName:
+        Ref: UrlShortenerFunctionName
+      Policies:
+      - CloudWatchPutMetricPolicy: {}
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: UrlShortenerTableName
+      Events:
+        CreateShortUrlApi:
+          Type: Api
+          Properties:
+            Path: /urlApi/get-url-shortener
+            Method: post
+            RestApiId:
+              Ref: UrlApiGateway
+        GetUrlApi:
+          Type: Api
+          Properties:
+            Path: /urlApi/short/{shortId}
+            Method: get
+            RestApiId:
+              Ref: UrlApiGateway
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        EntryPoints:
+        - src/index.ts
+        External:
+        - '@aws-sdk/client-dynamodb'
+        - aws-lambda
+        Format: cjs
+        Minify: false
+        Target: node18
+      SamResourceId: UrlShortenerFunction
+    DependsOn:
+    - UrlShortenerTable
+  UrlShortenerAuthorizerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: authorizer.handler
+      CodeUri: s3://skr-sam-bucket/url-shortener-skr/11bc512aa2e9f0c82ad9e743ae3712e0
+      Runtime: nodejs24.x
+      FunctionName: UrlShortenerAuthorizerFunction-SKR
+      Environment:
+        Variables:
+          JWT_SECRET:
+            Ref: JwtSecret
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        EntryPoints:
+        - src/authorizer.ts
+        External:
+        - aws-lambda
+        Format: cjs
+        Minify: false
+        Target: node18
+      SamResourceId: UrlShortenerAuthorizerFunction
+Outputs:
+  UrlShortenerTableName:
+    Description: DynamoDB Table Name
+    Value:
+      Ref: UrlShortenerTable
+  UrlShortenerTableArn:
+    Description: DynamoDB Table ARN
+    Value:
+      Fn::GetAtt:
+      - UrlShortenerTable
+      - Arn
+  UrlShortenerFunctionArn:
+    Description: Create Short URL Lambda Function ARN
+    Value:
+      Fn::GetAtt:
+      - UrlShortenerFunction
+      - Arn
+  UrlShortenerAuthorizerFunctionArn:
+    Description: Authorizer Lambda Function ARN
+    Value:
+      Fn::GetAtt:
+      - UrlShortenerAuthorizerFunction
+      - Arn
+  ApiEndpoint:
+    Description: API Gateway Endpoint URL
+    Value:
+      Fn::Sub: https://${UrlApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod

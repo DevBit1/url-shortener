@@ -5,49 +5,21 @@ dev:
       region: ap-south-1
   deploy:
     parameters:
-      template_file: template.[yaml|yml|json]
+      template_file: packaged-template.[yaml|yml|json]
       fail_on_empty_changeset: true
       on_failure: ROLLBACK
       max_wait_duration: 60
       stack_name: url-shortener-stack-skr
       s3_prefix: url-shortener-skr
-      resolve_s3: true
+      s3_bucket: skr-sam-bucket
       capabilities:
         - CAPABILITY_IAM  
         - CAPABILITY_NAMED_IAM
       parameter_overrides: ApiStageName=dev
-test:
-  global:
-    parameters:
-      region: ap-south-1
-  deploy:
+  package:
     parameters:
       template_file: template.[yaml|yml|json]
-      fail_on_empty_changeset: true
-      on_failure: ROLLBACK
-      max_wait_duration: 60
-      stack_name: url-shortener-stack-skr
       s3_prefix: url-shortener-skr
-      resolve_s3: true
-      capabilities:
-        - CAPABILITY_IAM  
-        - CAPABILITY_NAMED_IAM
-      parameter_overrides: ApiStageName=test
-prod:
-  global:
-    parameters:
-      region: ap-south-1
-  deploy:
-    parameters:
-      template_file: template.[yaml|yml|json]     
-      fail_on_empty_changeset: true
-      on_failure: ROLLBACK
-      max_wait_duration: 60
-      stack_name: url-shortener-stack-skr
-      s3_prefix: url-shortener-skr
-      resolve_s3: true
-      capabilities:
-        - CAPABILITY_IAM  
-        - CAPABILITY_NAMED_IAM
-      parameter_overrides: ApiStageName=prod
+      s3_bucket: skr-sam-bucket
+      output_template_file: packaged-template.yaml
   
