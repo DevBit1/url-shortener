@@ -49,7 +49,7 @@ jobs:
       #     aws configure set default.region ap-south-1
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@main # Or a specific version
+        uses: aws-actions/configure-aws-credentials@v4 # Or a specific version
         with:
           role-to-assume: arn:aws:iam::817901212217:role/DevBit-github-role
           aws-region: ap-south-1
