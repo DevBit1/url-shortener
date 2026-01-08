@@ -125,13 +125,10 @@ Resources:
       FunctionName: UrlShortenerAuthorizerFunction-SKR
       Policies:
         - AWSSecretsManagerGetSecretValuePolicy:
-            # SecretArn: !Ref SecretArn
-            SecretArn: "arn:aws:secretsmanager:ap-south-1:817901212217:secret:skr/app/auth_service/secrets-SzzW7L"
+            SecretArn: !Ref SecretArn
       Environment:
         Variables:
-          # SECRET_NAME: !Ref SecretName
-          SECRET_NAME: skr/app/auth_service/secrets
-          SECRET_ARN: !Ref SecretArn
+          SECRET_NAME: !Ref SecretName
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
