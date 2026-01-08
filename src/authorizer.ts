@@ -3,12 +3,23 @@ import {
   APIGatewayAuthorizerResult,
 } from "aws-lambda";
 import jwt from "jsonwebtoken";
+import {
+  SecretsManagerClient,
+  GetSecretValueCommand,
+} from "@aws-sdk/client-secrets-manager";
+
+const secretsManagerClient = new SecretsManagerClient({
+  region: "ap-south-1",
+});
+
+const command = new GetSecretValueCommand({
+  SecretId: process.env.SECRET_NAME!,
+});
 
 export async function handler(
   event: APIGatewayRequestAuthorizerEvent
 ): Promise<APIGatewayAuthorizerResult> {
   try {
-    // console.log("Authorizer event: ", JSON.stringify(event, null, 2));
 
     const authHeader =
       event?.headers?.["Authorization"] ||
@@ -20,13 +31,25 @@ export async function handler(
       throw new Error("Token missing");
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
+    const secretResponse = await secretsManagerClient.send(command);
 
-    const { role = "" } = decoded as { [key: string]: any };
+    console.log("Secret response: ", secretResponse);
+
+    const { JWT_SECRET = "" } = JSON.parse(secretResponse.SecretString || "{}");
+
+    if(!JWT_SECRET) {
+      throw new Error("JWT_SECRET not found");
+    }
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    let { role = "" } = decoded as { [key: string]: any };
 
     if (!role) {
       throw new Error("Invalid token: role missing");
     }
+
+    role = role.toLowerCase();
 
     if (role === "admin") {
       return {

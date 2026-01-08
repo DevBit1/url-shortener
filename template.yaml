@@ -28,9 +28,19 @@ Parameters:
       - dev
       - test
       - prod
-  JwtSecret:
+  SecretName:
     Type: String
-    Description: Secret key for JWT token verification
+    Description: Name of the secret for JWT token verification
+  SecretArn:
+    Type: String
+    Description: ARN of the secret for JWT token verification
+  
+
+Rules:
+  ValidateSecretName:
+    Assertions:
+      - Assert: !Not [!Equals [!Ref SecretName, ""]]
+        AssertDescription: "SecretName parameter must be provided and cannot be empty"
 
 Resources:
   UrlApiGateway:
@@ -97,6 +107,7 @@ Resources:
           - src/index.ts
         External:
           - "@aws-sdk/client-dynamodb"
+          - "@aws-sdk/client-secrets-manager"
           - "aws-lambda"
     DependsOn: 
       - UrlShortenerTable
@@ -108,9 +119,12 @@ Resources:
       CodeUri: .
       Runtime: nodejs24.x
       FunctionName: UrlShortenerAuthorizerFunction-SKR
+      Policies:
+        - AWSSecretsManagerGetSecretValuePolicy:
+            SecretArn: !Ref SecretArn
       Environment:
         Variables:
-          JWT_SECRET: !Ref JwtSecret
+          SECRET_NAME: !Ref SecretName
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
@@ -121,6 +135,8 @@ Resources:
           - src/authorizer.ts
         External:
           - "aws-lambda"
+          - "@aws-sdk/client-secrets-manager"
+
 
 Outputs:
   UrlShortenerTableName:

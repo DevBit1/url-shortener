@@ -11,11 +11,33 @@ dev:
       max_wait_duration: 60
       stack_name: url-shortener-stack-skr
       s3_prefix: url-shortener-skr
-      resolve_s3: true
+      s3_bucket: skr-sam-bucket
       capabilities:
         - CAPABILITY_IAM  
         - CAPABILITY_NAMED_IAM
       parameter_overrides: ApiStageName=dev
+  package:
+    parameters:
+      template_file: template.[yaml|yml|json]
+      output_template_file: packaged-template.yaml
+      s3_bucket: skr-sam-bucket
+  sync:
+    parameters:
+      template_file: template.[yaml|yml|json]
+      dependency_layer: true
+      skip_deploy_sync: true
+      stack_name: url-shortener-stack-skr
+      s3_bucket: skr-sam-bucket
+      s3_prefix: url-shortener-skr
+      capabilities:
+        - CAPABILITY_IAM  
+        - CAPABILITY_NAMED_IAM
+        - CAPABILITY_AUTO_EXPAND
+      parameter_overrides: ApiStageName=dev
+  build:
+    parameters:
+      template_file: template.yaml
+
 test:
   global:
     parameters:

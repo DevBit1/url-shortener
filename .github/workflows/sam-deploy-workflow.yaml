@@ -42,12 +42,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # - name: Configure AWS credentials
-      #   run: |
-      #     aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws configure set default.region ap-south-1
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4 # Or a specific version
         with:
@@ -57,10 +51,10 @@ jobs:
       - name: Test auth
         run: aws sts get-caller-identity
 
-      # - name: Build SAM Application
-      #   run: |
-      #     sam build
+      - name: Build SAM Application
+        run: |
+          sam build
 
-      # - name: Deploy sam Application
-      #   run: |
-      #     sam deploy --config-env dev --config-file samconfig.yaml --parameter-overrides "JwtSecret=${{ secrets.JWT_SECRET }}"
+      - name: Deploy sam Application
+        run: |
+          sam deploy --config-env dev --config-file samconfig.yaml --parameter-overrides "SecretArn=${{ secrets.AWS_SECRET_ARN }}, SecretName=${{ secrets.SECRET_NAME }}"
