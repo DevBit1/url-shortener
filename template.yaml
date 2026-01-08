@@ -41,6 +41,10 @@ Rules:
     Assertions:
       - Assert: !Not [!Equals [!Ref SecretName, ""]]
         AssertDescription: "SecretName parameter must be provided and cannot be empty"
+  ValidateSecretArn:
+    Assertions:
+      - Assert: !Not [!Equals [!Ref SecretArn, ""]]
+        AssertDescription: "SecretArn parameter must be provided and cannot be empty"
 
 Resources:
   UrlApiGateway:
@@ -121,10 +125,13 @@ Resources:
       FunctionName: UrlShortenerAuthorizerFunction-SKR
       Policies:
         - AWSSecretsManagerGetSecretValuePolicy:
-            SecretArn: !Ref SecretArn
+            # SecretArn: !Ref SecretArn
+            SecretArn: "arn:aws:secretsmanager:ap-south-1:817901212217:secret:skr/app/auth_service/secrets-SzzW7L"
       Environment:
         Variables:
-          SECRET_NAME: !Ref SecretName
+          # SECRET_NAME: !Ref SecretName
+          SECRET_NAME: skr/app/auth_service/secrets
+          SECRET_ARN: !Ref SecretArn
     Metadata:
       BuildMethod: esbuild
       BuildProperties:

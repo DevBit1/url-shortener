@@ -20,7 +20,6 @@ export async function handler(
   event: APIGatewayRequestAuthorizerEvent
 ): Promise<APIGatewayAuthorizerResult> {
   try {
-
     const authHeader =
       event?.headers?.["Authorization"] ||
       event?.headers?.["authorization"] ||
@@ -31,13 +30,18 @@ export async function handler(
       throw new Error("Token missing");
     }
 
+    console.log("Token: ", token);
+    console.log("Secret name: ", process.env.SECRET_NAME);
+    console.log("Secret ARN: ", process.env.SECRET_ARN);
+    console.log("Command: ", command);
+
     const secretResponse = await secretsManagerClient.send(command);
 
     console.log("Secret response: ", secretResponse);
 
     const { JWT_SECRET = "" } = JSON.parse(secretResponse.SecretString || "{}");
 
-    if(!JWT_SECRET) {
+    if (!JWT_SECRET) {
       throw new Error("JWT_SECRET not found");
     }
 
