@@ -57,4 +57,4 @@ jobs:
 
       - name: Deploy sam Application
         run: |
-          sam deploy --config-env dev --config-file samconfig.yaml --parameter-overrides "SecretArn=${{ secrets.AWS_SECRET_ARN }}, SecretName=${{ secrets.SECRET_NAME }}"
+          sam deploy --config-env dev --config-file samconfig.yaml --parameter-overrides "SecretArn=${{ secrets.AWS_SECRET_ARN }} SecretName=${{ secrets.SECRET_NAME }}"

@@ -129,6 +129,7 @@ Resources:
       Environment:
         Variables:
           SECRET_NAME: !Ref SecretName
+          SECRET_ARN: !Ref SecretArn
     Metadata:
       BuildMethod: esbuild
       BuildProperties:
